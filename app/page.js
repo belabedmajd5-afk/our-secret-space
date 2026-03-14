@@ -50,25 +50,29 @@ export default function Home() {
     }
   };
 
-  // 1. PWA SERVICE WORKER REGISTRATION
+  // 1. Service Worker & Interaction Handshake
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js").then(
-          (reg) => console.log("SW registered:", reg.scope),
-          (err) => console.log("SW failed:", err)
-        );
+        navigator.serviceWorker.register("/sw.js");
       });
     }
+    
+    // Silent Handshake: Enables vibration engine on first tap
+    const enableVibe = () => {
+      if (navigator.vibrate) navigator.vibrate(0);
+      window.removeEventListener('click', enableVibe);
+    };
+    window.addEventListener('click', enableVibe);
   }, []);
 
-  // 2. Identity Check
+  // 2. Identity Persistence
   useEffect(() => {
     const savedUser = localStorage.getItem("user_identity");
     if (savedUser) setUser(savedUser);
   }, []);
 
-  // 3. Real-Time Logic Engine
+  // 3. Real-Time Engine
   useEffect(() => {
     if (!user) return;
     const partnerID = user === "majd" ? "maram" : "majd";
@@ -99,7 +103,11 @@ export default function Home() {
             const randomMsg = selectedTheme.messages[Math.floor(Math.random() * selectedTheme.messages.length)];
 
             setNotification({ text: randomMsg, style: selectedTheme.style });
-            if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+            
+            // THE VIBRATION TRIGGER
+            if (typeof navigator !== "undefined" && navigator.vibrate) {
+              navigator.vibrate([200, 100, 200]);
+            }
             
             setTimeout(() => setNotification(null), 5000);
           }
@@ -117,11 +125,10 @@ export default function Home() {
   const handleTransmit = async (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
-    const formatted = inputValue.toUpperCase();
     try {
-      await updateDoc(doc(db, "settings", "stranger-things"), { message: formatted });
+      await updateDoc(doc(db, "settings", "stranger-things"), { message: inputValue.toUpperCase() });
       await addDoc(collection(db, "letters"), {
-        content: formatted,
+        content: inputValue.toUpperCase(),
         date: serverTimestamp(),
         sender: user 
       });
@@ -138,8 +145,8 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#fff5f7] flex flex-col items-center justify-center p-6 text-center">
-        <h1 className="text-3xl font-bold text-pink-400 mb-8 tracking-tighter">Our Secret Space</h1>
+      <div className="min-h-screen bg-[#fff5f7] flex flex-col items-center justify-center p-6 text-center font-sans">
+        <h1 className="text-3xl font-bold text-pink-400 mb-8 tracking-tighter uppercase">Our Secret Space</h1>
         <div className="flex gap-4">
           <button onClick={() => { localStorage.setItem("user_identity", "majd"); setUser("majd"); }} className="px-10 py-4 bg-white border-2 border-pink-100 rounded-3xl text-pink-400 font-bold active:scale-95 transition-all">Majd</button>
           <button onClick={() => { localStorage.setItem("user_identity", "maram"); setUser("maram"); }} className="px-10 py-4 bg-pink-400 border-2 border-pink-400 rounded-3xl text-white font-bold active:scale-95 transition-all">Maram</button>
@@ -178,10 +185,10 @@ export default function Home() {
             <p className="text-[10px] uppercase tracking-[0.4em] text-pink-300 font-bold mt-2">Our Secret Space</p>
           </div>
           
-          <div className="w-full space-y-3 relative group">
+          <div className="w-full space-y-3 relative">
              <div className="flex justify-between items-center px-1">
                 <div className="flex gap-4">
-                  <Link href="/history" className="text-[10px] text-pink-400 uppercase font-black underline underline-offset-4">Archive</Link>
+                  <Link href="/history" className="text-[10px] text-pink-400 uppercase font-black underline decoration-pink-100 underline-offset-4">Archive</Link>
                   <button onClick={() => { localStorage.removeItem("user_identity"); window.location.reload(); }} className="text-[10px] text-slate-300 uppercase font-bold">Log Out</button>
                 </div>
              </div>
@@ -191,10 +198,10 @@ export default function Home() {
              </button>
           </div>
 
-          <div className="w-full pt-6 flex flex-col items-center">
+          <div className="w-full pt-6">
             <Letter 
               date={new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} 
-              content={secretMessage || "Silence..."} 
+              content={secretMessage || "The air is still..."} 
             />
           </div>
         </div>

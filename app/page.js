@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { db } from '../lib/firebase';
+import { db, messaging, getToken } from '../lib/firebase';
 import { 
   doc, 
   onSnapshot, 
@@ -50,21 +50,41 @@ export default function Home() {
     }
   };
 
-  // 1. Service Worker & Interaction Handshake
+  // 1. PWA & NOTIFICATION SETUP
   useEffect(() => {
+    // Register Service Worker
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("/sw.js");
       });
     }
-    
-    // Silent Handshake: Enables vibration engine on first tap
-    const enableVibe = () => {
-      if (navigator.vibrate) navigator.vibrate(0);
-      window.removeEventListener('click', enableVibe);
+
+    // Permission & Token Logic
+    const setupNotifications = async () => {
+      if (!user || !messaging) return;
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          const token = await getToken(messaging, { 
+            vapidKey: 'BOML3JD7xJEf68MY9hBoOg5QsFxoL-2r4H3sq08XFq-2R8C5xOrMUeFgrkurNH53zDnu0uJ2Nz1uFP-5WmrBErs' 
+          });
+
+          if (token) {
+            await setDoc(doc(db, "tokens", user), { 
+              token: token,
+              lastUpdated: serverTimestamp() 
+            }, { merge: true });
+          }
+        }
+      } catch (err) { console.error("Notification setup failed:", err); }
     };
+
+    setupNotifications();
+
+    // Silent Vibration Handshake
+    const enableVibe = () => { if (navigator.vibrate) navigator.vibrate(0); window.removeEventListener('click', enableVibe); };
     window.addEventListener('click', enableVibe);
-  }, []);
+  }, [user]);
 
   // 2. Identity Persistence
   useEffect(() => {
@@ -72,7 +92,7 @@ export default function Home() {
     if (savedUser) setUser(savedUser);
   }, []);
 
-  // 3. Real-Time Engine
+  // 3. Real-Time Logic Engine
   useEffect(() => {
     if (!user) return;
     const partnerID = user === "majd" ? "maram" : "majd";
@@ -103,22 +123,15 @@ export default function Home() {
             const randomMsg = selectedTheme.messages[Math.floor(Math.random() * selectedTheme.messages.length)];
 
             setNotification({ text: randomMsg, style: selectedTheme.style });
-            
-            // THE VIBRATION TRIGGER
             if (typeof navigator !== "undefined" && navigator.vibrate) {
               navigator.vibrate([200, 100, 200]);
             }
-            
             setTimeout(() => setNotification(null), 5000);
           }
         }
       });
 
-      return () => {
-        unsubMessage();
-        unsubPartner();
-        navigator.geolocation.clearWatch(watchId);
-      };
+      return () => { unsubMessage(); unsubPartner(); navigator.geolocation.clearWatch(watchId); };
     }
   }, [user]);
 
@@ -208,7 +221,7 @@ export default function Home() {
       ) : (
         <div className="mt-10 flex flex-col items-center w-full max-w-md">
           <LightWall message={secretMessage} /> 
-          <form onSubmit={handleTransmit} className="mt-16 w-full px-6">
+          <form onSubmit={handleTransmit} className="mt-16 w-full px-6 text-center">
             <input 
               type="text"
               value={inputValue}

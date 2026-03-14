@@ -1,20 +1,9 @@
-self.addEventListener("install", (event) => {
-  console.log("Service Worker installed.");
-  self.skipWaiting();
-});
-
-self.addEventListener("activate", (event) => {
-  console.log("Service Worker activated.");
-});
-
-// This listens for push events (for later when we do FCM)
-self.addEventListener("push", (event) => {
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: "/icon-192x192.png",
-    badge: "/icon-192x192.png",
-    vibrate: [200, 100, 200],
-  };
-  event.waitUntil(self.registration.showNotification(data.title, options));
-});
+const firebaseConfig = {
+  apiKey: "AIzaSyC_4G8ANs9Gi5YOMq_BuGyfQd3ff9xEfJI",
+  authDomain: "our-secret-space-56fee.firebaseapp.com",
+  projectId: "our-secret-space-56fee",
+  storageBucket: "our-secret-space-56fee.firebasestorage.app",
+  messagingSenderId: "540266168417",
+  appId: "1:540266168417:web:91739eb13dfde8a2512a20",
+  measurementId: "G-0TN56RYX56"
+};

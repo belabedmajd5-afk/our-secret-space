@@ -29,7 +29,6 @@ export default function Home() {
   const [partnerLocation, setPartnerLocation] = useState(null);
   const [notification, setNotification] = useState(null);
 
-  // --- THE SURPRISE THEMES ---
   const themes = {
     romance: {
       style: "bg-white border-pink-200 text-pink-500 shadow-pink-100",
@@ -51,21 +50,33 @@ export default function Home() {
     }
   };
 
+  // 1. PWA SERVICE WORKER REGISTRATION
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").then(
+          (reg) => console.log("SW registered:", reg.scope),
+          (err) => console.log("SW failed:", err)
+        );
+      });
+    }
+  }, []);
+
+  // 2. Identity Check
   useEffect(() => {
     const savedUser = localStorage.getItem("user_identity");
     if (savedUser) setUser(savedUser);
   }, []);
 
+  // 3. Real-Time Logic Engine
   useEffect(() => {
     if (!user) return;
     const partnerID = user === "majd" ? "maram" : "majd";
 
-    // 1. Secret Message Listener
     const unsubMessage = onSnapshot(doc(db, "settings", "stranger-things"), (docSnap) => {
       if (docSnap.exists()) setSecretMessage(docSnap.data().message || "");
     });
 
-    // 2. GPS Tracking
     if ("geolocation" in navigator) {
       const watchId = navigator.geolocation.watchPosition((position) => {
         const coords = [position.coords.latitude, position.coords.longitude];
@@ -77,14 +88,12 @@ export default function Home() {
         }, { merge: true });
       }, null, { enableHighAccuracy: true });
 
-      // 3. Partner & Heartbeat Listener
       const unsubPartner = onSnapshot(doc(db, "locations", partnerID), (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setPartnerLocation(data.coords);
           
           if (data.pulse === true) {
-            // Pick a random theme and message
             const keys = Object.keys(themes);
             const selectedTheme = themes[keys[Math.floor(Math.random() * keys.length)]];
             const randomMsg = selectedTheme.messages[Math.floor(Math.random() * selectedTheme.messages.length)];
@@ -144,7 +153,6 @@ export default function Home() {
       isUpsideDown ? 'bg-black text-red-900 font-serif' : 'bg-[#fff5f7] text-teal-900 font-sans'
     }`}>
       
-      {/* --- FLOATING NOTIFICATION --- */}
       {notification && (
         <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[5000] w-[90%] max-w-sm p-4 rounded-2xl border-2 shadow-2xl transition-all animate-in slide-in-from-top duration-500 ${notification.style}`}>
           <div className="flex items-center gap-3">

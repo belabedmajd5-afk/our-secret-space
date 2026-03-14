@@ -21,23 +21,41 @@ export default function History() {
 
   return (
     <main className="min-h-screen bg-[#fff5f7] p-8 font-sans">
-      <Link href="/" className="text-pink-300 text-xs uppercase tracking-widest font-bold mb-8 block">
+      <Link href="/" className="text-pink-300 text-xs uppercase tracking-widest font-bold mb-8 block hover:text-pink-400 transition-colors">
         ← Back to Space
       </Link>
       
-      <h1 className="text-3xl font-bold text-pink-400 mb-12">Our Memory Box</h1>
+      <h1 className="text-3xl font-bold text-pink-400 mb-12 text-center">The Archive</h1>
 
-      <div className="flex flex-col gap-6 max-w-md mx-auto">
-        {letters.map((letter) => (
-          <div key={letter.id} className="bg-white p-6 rounded-2xl shadow-sm border border-pink-100 transform -rotate-1 hover:rotate-0 transition-transform">
-            <p className="text-[10px] text-pink-300 uppercase tracking-widest mb-2">
-              {letter.date?.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </p>
-            <p className="text-slate-700 leading-relaxed font-serif italic">
-              "{letter.content}"
-            </p>
-          </div>
-        ))}
+      <div className="grid gap-8 max-w-md mx-auto">
+        {letters.length === 0 ? (
+          <p className="text-center text-slate-400 italic font-serif">No signals recorded yet...</p>
+        ) : (
+          letters.map((letter) => (
+            <div key={letter.id} className="group relative">
+              <div className="absolute inset-0 bg-pink-100 rounded-xl transform rotate-1 group-hover:rotate-0 transition-transform duration-300" />
+              <div className="relative bg-white p-8 rounded-xl shadow-sm border border-pink-50 transform -rotate-1 group-hover:-translate-y-2 transition-all duration-300">
+                <div className="flex justify-between items-start mb-4">
+                  <p className="text-[10px] text-pink-300 uppercase tracking-[0.2em] font-bold">
+                    {letter.date?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                  <div className="w-6 h-6 bg-pink-50 rounded-full flex items-center justify-center text-[10px] text-pink-300 font-bold uppercase">
+                    {letter.sender?.charAt(0)}
+                  </div>
+                </div>
+                <p className="text-slate-800 leading-relaxed font-serif italic text-lg">
+                  "{letter.content}"
+                </p>
+                <div className="mt-6 border-t border-pink-50 pt-4 flex justify-between items-center">
+                  <span className="text-[8px] text-pink-200 uppercase tracking-widest font-mono">
+                    Received from {letter.sender}
+                  </span>
+                  <div className="text-pink-100">❤</div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </main>
   );
